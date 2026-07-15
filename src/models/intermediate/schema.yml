@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: int_customer_clean
+    description: "Cleaned and deduplicated customer data. Null records removed and duplicates eliminated by CUSTID using ROW_NUMBER."
+    columns:
+      - name: CUSTID
+        description: "Customer identifier - unique after deduplication"
+        tests:
+          - unique
+          - not_null
+      - name: NAME
+        description: "Customer name"
+        tests:
+          - not_null
+      - name: EMAILID
+        description: "Customer email address"
+        tests:
+          - not_null
+      - name: REGION
+        description: "Customer region"
+        tests:
+          - not_null
+
+  - name: int_order_clean
+    description: "Cleaned and deduplicated order data. Null records removed, duplicates eliminated by ORDERID, and columns cast to proper types."
+    columns:
+      - name: ORDERID
+        description: "Order identifier - unique after deduplication"
+        tests:
+          - unique
+          - not_null
+      - name: CUSTID
+        description: "Customer identifier foreign key"
+        tests:
+          - not_null
+      - name: ITEMNAME
+        description: "Name of the ordered item"
+        tests:
+          - not_null
+      - name: PRICEPERUNIT
+        description: "Price per unit cast to NUMBER(18,2)"
+        tests:
+          - not_null
+      - name: QTY
+        description: "Quantity cast to NUMBER(18,0)"
+        tests:
+          - not_null
+      - name: ORDER_DATE
+        description: "Order date cast to DATE"
+        tests:
+          - not_null
+      - name: STARTDATE
+        description: "SCD start date cast to DATE"
+      - name: ENDDATE
+        description: "SCD end date cast to DATE"
+      - name: ISACTIVE
+        description: "Active flag as STRING"

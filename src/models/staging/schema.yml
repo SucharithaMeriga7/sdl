@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: stg_customer
+    description: "Raw customer data loaded from Snowflake stage. Source: @gen_ai_poc_snowflakecoe.sdlc_wizard.sdlc_wizard_stage/customerdata"
+    columns:
+      - name: CUSTID
+        description: "Customer identifier"
+        tests:
+          - not_null
+      - name: NAME
+        description: "Customer name"
+        tests:
+          - not_null
+      - name: EMAILID
+        description: "Customer email address"
+      - name: REGION
+        description: "Customer region"
+
+  - name: stg_order
+    description: "Raw order data loaded from Snowflake stage. Source: @gen_ai_poc_snowflakecoe.sdlc_wizard.sdlc_wizard_stage/orderdata"
+    columns:
+      - name: ORDERID
+        description: "Order identifier"
+        tests:
+          - not_null
+      - name: CUSTID
+        description: "Customer identifier foreign key"
+        tests:
+          - not_null
+      - name: ITEMNAME
+        description: "Name of the ordered item"
+      - name: PRICEPERUNIT
+        description: "Price per unit of the item"
+      - name: QTY
+        description: "Quantity ordered"
+      - name: ORDER_DATE
+        description: "Date the order was placed"
+      - name: STARTDATE
+        description: "SCD start date"
+      - name: ENDDATE
+        description: "SCD end date"
+      - name: ISACTIVE
+        description: "Flag indicating if the record is active"

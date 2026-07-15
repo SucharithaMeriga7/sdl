@@ -1,0 +1,93 @@
+version: 2
+
+models:
+  - name: ordersummary
+    description: "Order summary table joining cleaned customer and order data. Contains TOTALAMOUNT computed as PRICEPERUNIT * QTY. SCD Type 2 tracking is handled via the customer_snapshot and customer_scd2 models."
+    columns:
+      - name: ORDERID
+        description: "Order identifier"
+        tests:
+          - not_null
+          - unique
+      - name: CUSTID
+        description: "Customer identifier"
+        tests:
+          - not_null
+      - name: NAME
+        description: "Customer name from customer table"
+        tests:
+          - not_null
+      - name: EMAILID
+        description: "Customer email"
+      - name: REGION
+        description: "Customer region"
+      - name: ITEMNAME
+        description: "Ordered item name"
+        tests:
+          - not_null
+      - name: PRICEPERUNIT
+        description: "Price per unit"
+        tests:
+          - not_null
+      - name: QTY
+        description: "Quantity ordered"
+        tests:
+          - not_null
+      - name: TOTALAMOUNT
+        description: "Computed as PRICEPERUNIT * QTY"
+        tests:
+          - not_null
+      - name: ORDER_DATE
+        description: "Date of the order"
+        tests:
+          - not_null
+      - name: STARTDATE
+        description: "SCD start date from order data"
+      - name: ENDDATE
+        description: "SCD end date from order data"
+      - name: ISACTIVE
+        description: "Active flag from order data"
+
+  - name: customer_scd2
+    description: "SCD Type 2 dimension table for customers. Built from dbt snapshot (check strategy on NAME, EMAILID, REGION). Tracks historical changes with STARTDATE, ENDDATE, and ISACTIVE flag."
+    columns:
+      - name: CUSTID
+        description: "Customer identifier (not unique due to SCD2 history)"
+        tests:
+          - not_null
+      - name: NAME
+        description: "Customer name"
+        tests:
+          - not_null
+      - name: EMAILID
+        description: "Customer email"
+      - name: REGION
+        description: "Customer region"
+      - name: STARTDATE
+        description: "SCD2 record valid from timestamp"
+        tests:
+          - not_null
+      - name: ENDDATE
+        description: "SCD2 record valid to timestamp (NULL if current)"
+      - name: ISACTIVE
+        description: "TRUE if current record, FALSE if historical"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['TRUE', 'FALSE']
+
+  - name: customeraggregatespend
+    description: "Aggregated customer spend table. Total amount grouped by customer NAME and ORDER_DATE from the ordersummary table."
+    columns:
+      - name: NAME
+        description: "Customer name"
+        tests:
+          - not_null
+      - name: ORDER_DATE
+        description: "Order date"
+        tests:
+          - not_null
+      - name: TOTALAMOUNT
+        description: "Sum of TOTALAMOUNT per customer per date"
+        tests:
+          - not_null

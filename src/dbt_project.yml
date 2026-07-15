@@ -1,0 +1,32 @@
+name: 'sdlc_wizard_project'
+version: '1.0.0'
+config-version: 2
+
+profile: 'default'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  sdlc_wizard_project:
+    staging:
+      +materialized: view
+      +schema: sdlc_wizard
+    intermediate:
+      +materialized: view
+      +schema: sdlc_wizard
+    marts:
+      +materialized: table
+      +schema: sdlc_wizard
+
+snapshots:
+  sdlc_wizard_project:
+    +schema: sdlc_wizard

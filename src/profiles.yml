@@ -1,0 +1,12 @@
+default:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: URB05682
+      user: NAVYASRI_P
+      role: CORTEX_USER_ROLE
+      database: gen_ai_poc_snowflakecoe
+      warehouse: W_CAPG_APAC_IND_DEMO_IDEA_REFACTOR_SOL_XS
+      schema: sdlc_wizard
+      threads: 4

@@ -1,0 +1,33 @@
+WITH FILTERED_CUSTOMER AS (
+    SELECT
+        CUSTID,
+        NAME,
+        EMAILID,
+        REGION
+    FROM {{ ref('stg_customer') }}
+    WHERE CUSTID IS NOT NULL
+      AND NAME IS NOT NULL
+      AND EMAILID IS NOT NULL
+      AND REGION IS NOT NULL
+),
+
+DEDUPED_CUSTOMER AS (
+    SELECT
+        CUSTID,
+        NAME,
+        EMAILID,
+        REGION,
+        ROW_NUMBER() OVER (
+            PARTITION BY CUSTID
+            ORDER BY NAME
+        ) AS RN
+    FROM FILTERED_CUSTOMER
+    QUALIFY RN = 1
+)
+
+SELECT
+    CUSTID,
+    NAME,
+    EMAILID,
+    REGION
+FROM DEDUPED_CUSTOMER

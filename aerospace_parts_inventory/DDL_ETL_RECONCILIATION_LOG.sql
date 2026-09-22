@@ -11,16 +11,17 @@ USE SCHEMA SDLC_WIZARD;
 
 -- SECTION 1: Object Definition
 CREATE TABLE IF NOT EXISTS ETL_RECONCILIATION_LOG (
-    RUN_ID                  VARCHAR(100)        NOT NULL,
-    RUN_TIMESTAMP           TIMESTAMP_NTZ       DEFAULT CURRENT_TIMESTAMP(),
-    WATERMARK_USED          TIMESTAMP_NTZ,
-    SOURCE_COUNT            NUMBER(18),
-    INSERTED_COUNT          NUMBER(18),
-    UPDATED_COUNT           NUMBER(18),
-    DECOMMISSIONED_COUNT    NUMBER(18),
+    RUN_ID                  VARCHAR(100)    NOT NULL,
+    RUN_TIMESTAMP           TIMESTAMP_NTZ   DEFAULT CURRENT_TIMESTAMP(),
+    SOURCE_COUNT            NUMBER(12,0),
+    TARGET_COUNT_BEFORE     NUMBER(12,0),
+    TARGET_COUNT_AFTER      NUMBER(12,0),
+    INSERTED_COUNT          NUMBER(12,0),
+    UPDATED_COUNT           NUMBER(12,0),
+    SOFT_DELETED_COUNT      NUMBER(12,0),
+    EXCLUDED_COUNT          NUMBER(12,0),
     STATUS                  VARCHAR(20),
-    ERROR_MESSAGE           VARCHAR(2000),
-    NEW_WATERMARK           TIMESTAMP_NTZ
+    ERROR_MESSAGE           VARCHAR(4000)
 );
 
 -- SECTION 2: Constraints
@@ -28,5 +29,6 @@ ALTER TABLE ETL_RECONCILIATION_LOG
     ADD CONSTRAINT IF NOT EXISTS PK_ERL_RUN_ID PRIMARY KEY (RUN_ID);
 
 -- SECTION 3: Notes
--- One row per SP execution. STATUS: SUCCESS | FAILED.
--- NEW_WATERMARK stored here and read on next incremental run.
+-- STATUS values : SUCCESS | FAILED | PARTIAL
+-- RUN_ID        : UUID generated per execution
+-- Mandatory     : Every SP execution must insert one row

@@ -11,19 +11,18 @@ USE SCHEMA SDLC_WIZARD;
 
 -- SECTION 1: Object Definition
 CREATE TABLE IF NOT EXISTS AEROSPACE_PARTS_TARGET (
-    PART_NUMBER             VARCHAR(50)         NOT NULL,
+    PART_NUMBER             VARCHAR(50)     NOT NULL,
     MANUFACTURER            VARCHAR(100),
     WEIGHT_KG               NUMBER(10,4),
     UNIT_PRICE_USD          NUMBER(14,2),
-    CERTIFICATION_STATUS    VARCHAR(20),
-    LEAD_TIME_DAYS          NUMBER(6),
     LIFECYCLE_STATUS        VARCHAR(50),
     INSTALLATION_DATE       DATE,
-    RISK_SCORE              VARCHAR(20),
-    STATUS                  VARCHAR(30),
+    CERTIFICATION_STATUS    VARCHAR(50),
+    LEAD_TIME_DAYS          NUMBER(6,0),
     UPDATED_AT              TIMESTAMP_NTZ,
-    DW_INSERT_TIMESTAMP     TIMESTAMP_NTZ       DEFAULT CURRENT_TIMESTAMP(),
-    DW_UPDATE_TIMESTAMP     TIMESTAMP_NTZ       DEFAULT CURRENT_TIMESTAMP()
+    RISK_SCORE              VARCHAR(20),
+    DW_INSERT_TIMESTAMP     TIMESTAMP_NTZ,
+    DW_UPDATED_TIMESTAMP    TIMESTAMP_NTZ
 );
 
 -- SECTION 2: Constraints
@@ -31,5 +30,6 @@ ALTER TABLE AEROSPACE_PARTS_TARGET
     ADD CONSTRAINT IF NOT EXISTS PK_APT_PART_NUMBER PRIMARY KEY (PART_NUMBER);
 
 -- SECTION 3: Notes
--- SCD Type 1 target. RISK_SCORE is derived. STATUS = Decommissioned for soft-deletes.
--- DW_INSERT_TIMESTAMP set on first load; DW_UPDATE_TIMESTAMP updated on every merge match.
+-- RISK_SCORE  : High Risk | Medium Risk | Low Risk
+-- SCD Type 1  : Full overwrite on PART_NUMBER match
+-- Soft Delete : LIFECYCLE_STATUS set to Decommissioned when absent from source

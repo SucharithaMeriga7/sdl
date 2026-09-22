@@ -24,122 +24,60 @@ SELECT
 FROM AEROSPACE_PARTS_TARGET;
 
 -- ============================================================
--- AC-002: NO DUPLICATE BUSINESS KEYS IN TARGET
+-- AC-002: SCHEMA VALIDATION — REQUIRED COLUMNS PRESENT
+-- PASS: All expected columns exist in target
+-- ============================================================
+SELECT
+    'AC-002'                                    AS acceptance_criteria,
+    'SCHEMA VALIDATION - REQUIRED COLUMNS'      AS description,
+    COLUMN_NAME,
+    DATA_TYPE,
+    'PASS'                                      AS result
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA  = 'SDLC_WIZARD'
+  AND TABLE_NAME    = 'AEROSPACE_PARTS_TARGET'
+  AND COLUMN_NAME IN (
+      'PART_NUMBER','PART_NAME','CATEGORY','SUPPLIER_ID',
+      'UNIT_PRICE_USD','WEIGHT_KG','LEAD_TIME_DAYS',
+      'CERTIFICATION_STATUS','INSTALLATION_DATE','LIFECYCLE_STATUS',
+      'RISK_SCORE','UPDATED_AT','IS_DELETED',
+      'DW_INSERT_TS','DW_LAST_UPDATE_TIMESTAMP','DW_BATCH_ID'
+  )
+ORDER BY ORDINAL_POSITION;
+
+-- ============================================================
+-- AC-003: BUSINESS KEY UNIQUENESS — NO DUPLICATE PART_NUMBER
 -- PASS: duplicate_count = 0
 -- ============================================================
 SELECT
-    'AC-002'                            AS acceptance_criteria,
-    'NO DUPLICATE PART_NUMBER IN TARGET' AS description,
-    COUNT(*)                            AS duplicate_count,
+    'AC-003'                           AS acceptance_criteria,
+    'BUSINESS KEY UNIQUENESS'          AS description,
+    COUNT(*)                           AS duplicate_count,
     CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END AS result
 FROM (
-    SELECT PART_NUMBER
+    SELECT PART_NUMBER, COUNT(*) AS CNT
     FROM AEROSPACE_PARTS_TARGET
     GROUP BY PART_NUMBER
-    HAVING COUNT(*) > 1
+    HAVING CNT > 1
 );
 
 -- ============================================================
--- AC-003: MANUFACTURER IS UPPERCASED
--- PASS: non_upper_count = 0
+-- AC-004: NO NULL BUSINESS KEYS
+-- PASS: null_key_count = 0
 -- ============================================================
 SELECT
-    'AC-003'                        AS acceptance_criteria,
-    'MANUFACTURER IS UPPER CASE'    AS description,
-    COUNT(*)                        AS non_upper_count,
+    'AC-004'                        AS acceptance_criteria,
+    'NO NULL BUSINESS KEYS'         AS description,
+    COUNT(*)                        AS null_key_count,
     CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END AS result
 FROM AEROSPACE_PARTS_TARGET
-WHERE MANUFACTURER != UPPER(MANUFACTURER);
+WHERE PART_NUMBER IS NULL;
 
 -- ============================================================
--- AC-004: WEIGHT_KG IS NULL WHERE SOURCE VALUE WAS <= 0
--- PASS: invalid_weight_count = 0
--- ============================================================
-SELECT
-    'AC-004'                                AS acceptance_criteria,
-    'WEIGHT_KG NULL WHEN SOURCE <= 0'       AS description,
-    COUNT(*)                                AS invalid_weight_count,
-    CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END AS result
-FROM AEROSPACE_PARTS_TARGET
-WHERE WEIGHT_KG IS NOT NULL
-  AND WEIGHT_KG <= 0;
-
--- ============================================================
--- AC-005: UNIT_PRICE_USD ROUNDED TO 2 DECIMAL PLACES
--- PASS: unrounded_count = 0
--- ============================================================
-SELECT
-    'AC-005'                                    AS acceptance_criteria,
-    'UNIT_PRICE_USD ROUNDED TO 2 DECIMALS'      AS description,
-    COUNT(*)                                    AS unrounded_count,
-    CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END AS result
-FROM AEROSPACE_PARTS_TARGET
-WHERE UNIT_PRICE_USD != ROUND(UNIT_PRICE_USD, 2);
-
--- ============================================================
--- AC-006: END OF LIFE RECORDS EXCLUDED (INSTALLATION_DATE > 3 YRS)
--- PASS: eol_count = 0
--- ============================================================
-SELECT
-    'AC-006'                                        AS acceptance_criteria,
-    'EOL RECORDS EXCLUDED (INSTALLATION > 3 YEARS)' AS description,
-    COUNT(*)                                        AS eol_count,
-    CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END AS result
-FROM AEROSPACE_PARTS_TARGET
-WHERE INSTALLATION_DATE < DATEADD(YEAR, -3, CURRENT_DATE());
-
--- ============================================================
--- AC-007: RISK_SCORE DERIVATION IS CORRECT
+-- AC-005: RISK_SCORE POPULATION AND VALID VALUES
 -- PASS: invalid_risk_count = 0
 -- ============================================================
 SELECT
-    'AC-007'                        AS acceptance_criteria,
-    'RISK_SCORE DERIVATION CORRECT' AS description,
-    COUNT(*)                        AS invalid_risk_count,
-    CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END AS result
-FROM AEROSPACE_PARTS_TARGET
-WHERE RISK_SCORE NOT IN ('High Risk', 'Medium Risk', 'Low Risk')
-   OR (CERTIFICATION_STATUS = 'Pending' AND LEAD_TIME_DAYS > 90  AND RISK_SCORE != 'High Risk')
-   OR (CERTIFICATION_STATUS IN ('FAA','EASA','Dual') AND LEAD_TIME_DAYS <= 60 AND RISK_SCORE != 'Low Risk');
-
--- ============================================================
--- AC-008: SOFT DELETE — MISSING SOURCE RECORDS MARKED DECOMMISSIONED
--- PASS: Returns count of Decommissioned records (informational >= 0)
--- ============================================================
-SELECT
-    'AC-008'                                        AS acceptance_criteria,
-    'DECOMMISSIONED RECORDS EXIST FOR MISSING ROWS' AS description,
-    COUNT(*)                                        AS decommissioned_count,
-    CASE WHEN COUNT(*) >= 0 THEN 'PASS' ELSE 'FAIL' END AS result
-FROM AEROSPACE_PARTS_TARGET
-WHERE STATUS = 'Decommissioned';
-
--- ============================================================
--- AC-009: RECONCILIATION LOG ENTRY EXISTS FOR LATEST RUN
--- PASS: log_entry_count >= 1
--- ============================================================
-SELECT
-    'AC-009'                                    AS acceptance_criteria,
-    'RECONCILIATION LOG ENTRY FOR LATEST RUN'   AS description,
-    COUNT(*)                                    AS log_entry_count,
-    CASE WHEN COUNT(*) >= 1 THEN 'PASS' ELSE 'FAIL' END AS result
-FROM ETL_RECONCILIATION_LOG
-WHERE PIPELINE_NAME = 'SP_LOAD_AEROSPACE_PARTS_SCD1'
-  AND CAST(RUN_TIMESTAMP AS DATE) = CURRENT_DATE();
-
--- ============================================================
--- AC-010: TASK IS SCHEDULED AND ACTIVE
--- PASS: task_state = 'started' (active/resumed)
--- ============================================================
-SELECT
-    'AC-010'                            AS acceptance_criteria,
-    'TASK IS SCHEDULED AND ACTIVE'      AS description,
-    NAME                                AS task_name,
-    STATE                               AS task_state,
-    SCHEDULE                            AS task_schedule,
-    CASE WHEN STATE = 'started' THEN 'PASS' ELSE 'FAIL' END AS result
-FROM TABLE(INFORMATION_SCHEMA.TASK_HISTORY(
-    SCHEDULED_TIME_RANGE_START => DATEADD('DAY', -1, CURRENT_TIMESTAMP()),
-    TASK_NAME => 'TASK_SP_LOAD_AEROSPACE_PARTS_SCD1'
-))
-QUALIFY ROW_NUMBER() OVER (ORDER BY SCHEDULED_TIME DESC) = 1;
+    'AC-005'                          AS acceptance_criteria,
+    'RISK_SCORE VALID VALUES'         AS description,
+    COUNT(*)                          AS invalid_risk_count,

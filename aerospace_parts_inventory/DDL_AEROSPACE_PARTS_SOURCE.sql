@@ -11,16 +11,15 @@ USE SCHEMA SDLC_WIZARD;
 
 -- SECTION 1: Object Definition
 CREATE TABLE IF NOT EXISTS AEROSPACE_PARTS_SOURCE (
-    PART_NUMBER             VARCHAR(50)         NOT NULL,
-    MANUFACTURER            VARCHAR(100),
-    WEIGHT_KG               NUMBER(10,4),
-    UNIT_PRICE_USD          NUMBER(14,2),
-    CERTIFICATION_STATUS    VARCHAR(20),
-    LEAD_TIME_DAYS          NUMBER(6),
-    LIFECYCLE_STATUS        VARCHAR(50),
-    INSTALLATION_DATE       DATE,
-    UPDATED_AT              TIMESTAMP_NTZ,
-    STATUS                  VARCHAR(30)
+    PART_NUMBER         VARCHAR(50)     NOT NULL,
+    MANUFACTURER        VARCHAR(100),
+    WEIGHT_KG           NUMBER(10,4),
+    UNIT_PRICE_USD      NUMBER(14,4),
+    LIFECYCLE_STATUS    VARCHAR(50),
+    INSTALLATION_DATE   DATE,
+    CERTIFICATION_STATUS VARCHAR(50),
+    LEAD_TIME_DAYS      NUMBER(6,0),
+    UPDATED_AT          TIMESTAMP_NTZ
 );
 
 -- SECTION 2: Constraints
@@ -28,5 +27,6 @@ ALTER TABLE AEROSPACE_PARTS_SOURCE
     ADD CONSTRAINT IF NOT EXISTS PK_APS_PART_NUMBER PRIMARY KEY (PART_NUMBER);
 
 -- SECTION 3: Notes
--- Staging table. UPDATED_AT drives incremental watermark logic.
--- CERTIFICATION_STATUS values: FAA, EASA, Dual, Pending.
+-- Business Key : PART_NUMBER
+-- Incremental  : UPDATED_AT drives delta detection
+-- SCD Strategy : Type 1 (overwrite) on target
